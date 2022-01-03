@@ -23,8 +23,119 @@ function createFeatures(earthquakeData) {
   
     // Send our earthquakes layer to the createMap function/
     createMap(earthquakes);
+}
+
+
+
+
+// Store our API endpoint as queryUrl.
+var queryUrl2 = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
+
+// Perform a GET request to the query URL/
+d3.json(queryUrl2).then(function (plate) {
+  // Once we get a response, send the data.features object to the createFeatures function.
+  createFeatures(plate.features);
+});
+
+
+
+
+
+function markerSize(mag) {
+    return Math.sqrt(mag) * 50;
   }
   
+  // An array that contains all the information needed to create city and state markers
+  var mag = data.features.mag
+  var depth = data.features.geometry.coordinates[2]
+  
+  // Define arrays to hold the created city and state markers.
+  var magMarkers = [];
+  var plateMarkers = [];
+  
+  // Loop through locations, and create the city and state markers.
+  for (var i = 0; i < plate.features.length; i++) {
+    // Setting the marker radius for the state by passing population into the markerSize function
+    plateMarkers.push(
+      L.polyline(plate.features[i].geometry.coordinates, {
+        stroke: false,
+        fillOpacity: 0.75,
+        color: "white",
+        fillColor: "white",
+        radius: markerSize(data.features[i].state.population)
+      })
+    );
+  
+    // Set the marker radius for the city by passing the population to the markerSize() function.
+    magMarkers.push(
+      L.circle(data.features[i].length, {
+        stroke: false,
+        fillOpacity: 0.75,
+        color: "purple",
+        fillColor: "purple",
+        radius: markerSize(data.features[i].properties.mag)
+      })
+    );
+  }
+  
+  // Create the base layers.
+  var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  })
+  
+  var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+  });
+  
+  // Create two separate layer groups: one for the city markers and another for the state markers.
+  var plates = L.layerGroup(stateMarkers);
+  var mags = L.layerGroup(magMarkers);
+  
+  // Create a baseMaps object.
+  var baseMaps = {
+    "Street Map": street,
+    "Topographic Map": topo
+  };
+  
+  // Create an overlay object.
+  var overlayMaps = {
+    "State Population": states,
+    "City Population": cities
+  };
+  
+  // Define a map object.
+  var myMap = L.map("map", {
+    center: [37.09, -95.71],
+    zoom: 5,
+    layers: [street, states, cities]
+  });
+  
+  // Pass our map layers to our layer control.
+  // Add the layer control to the map.
+  L.control.layers(baseMaps, overlayMaps, {
+    collapsed: false
+  }).addTo(myMap);
+    // Define a function that we want to run once for each feature in the features array.
+    // Give each feature a popup that describes the place and time of the earthquake.
+    function onEachFeature(feature, layer) {
+        layer.bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`);
+    }
+
+    // Create a GeoJSON layer that contains the features array on the earthquakeData object.
+    // Run the onEachFeature function once for each piece of data in the array.
+    var earthquakes = L.geoJSON(earthquakeData, {
+        onEachFeature: onEachFeature
+    });
+
+    // Send our earthquakes layer to the createMap function/
+    createMap(earthquakes);
+
+
+    
+
+
+
+
 // // Store our API endpoint as queryUrl.
 // var queryUrl2 = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
 
