@@ -47,6 +47,7 @@ d3.json(queryUrl1).then(function (data) {
 });
 
 
+
 function createFeatures(earthquakeData) {
 
 
