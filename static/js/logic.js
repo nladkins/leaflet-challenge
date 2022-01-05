@@ -1,71 +1,79 @@
-function createMap(earthquakes) {
-
-  // Create the base layers.
-  var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  })
-
-  var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-  });
-
-  // Create a baseMaps object.
-  var baseMaps = {
-    "Street Map": street,
-    "Topographic Map": topo
-  };
-
-  // Create an overlay object to hold our overlay.
-  var overlayMaps = {
-    Earthquakes: earthquakes
-  };
-
-  // Create our map, giving it the streetmap and earthquakes layers to display on load.
-  var myMap = L.map("map", {
-    center: [
-      0, 0
-    ],
-    zoom: 2.4,
-    layers: [topo, earthquakes]
-  });
-
-  // Create a layer control.
-  // Pass it our baseMaps and overlayMaps.
-  // Add the layer control to the map.
-  L.control.layers(baseMaps, overlayMaps, {
-    collapsed: false
-  }).addTo(myMap);
-}
-
-// Store our API endpoint as queryUrl.
-var queryUrl1 = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson";
-
-// Perform a GET request to the query URL/
-d3.json(queryUrl1).then(function (data) {
-  // Once we get a response, send the data.features object to the createFeatures function.
-  createFeatures(data.features);
+// Create map, giving it the topography to display on load.
+var myMap = L.map("map", {
+  center: [
+    0, 0
+  ],
+  zoom: 2.4,
 });
 
 
+// Create the base layers.
+var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(myMap);
 
-function createFeatures(earthquakeData) {
+var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+  attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+}).addTo(myMap);
 
 
-  // Define a function that we want to run once for each feature in the features array.
-  // Give each feature a popup that describes the place and time of the earthquake.
-  function onEachFeature(feature, layer) {
-    layer.bindPopup(`<h3>${feature.properties.place}</h3><hr>
-    <h3>${new Date(feature.properties.time)}</h3>
-    <h3>Magnitude: ${feature.properties.mag}</h3>
-    <p>More Info <br>${feature.properties.url}</p>`)
-  }
+// Store our API endpoint as queryUrl.
+var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson";
 
-  // Create a GeoJSON layer that contains the features array on the earthquakeData object.
-  // Run the onEachFeature function once for each piece of data in the array.
-  var earthquakes = L.geoJSON(earthquakeData, {
-    onEachFeature: onEachFeature
-  });
 
-  // Send our earthquakes layer to the createMap function/
-  createMap(earthquakes);
+function chooseColor(mag) {
+  if (mag <= 5) return "light yellow";
+  else if (mag <= 6.5) return "orange";
+  else return"red";
 }
+
+// Perform a GET request to the query URL/
+d3.json(queryUrl).then(function (data) {
+  // Once we get a response, send the data.features object to the createFeatures function.
+  L.geoJSON(data, {
+    
+    style: function(feature) {
+      // Add circles to the map.
+      L.circle([data.features.geometry.coordinates[0], data.features.geometry.coordinates[1]], {
+        fillOpacity: 0.75,
+        color: "white",
+        fillColor: chooseColor(feature.properties.mag),
+        // Adjust the radius.
+        radius: Math.sqrt(data.features.geometry.coordinates[2] * 1000)
+      }).bindPopup(`<h3>${data.features.properties.place}</h3><hr>
+      <h3>${new Date(data.features.properties.time)}</h3>
+      <h3>Magnitude: ${data.features.properties.mag}</h3>
+      <p>More Info <br>${data.features.properties.url}</p>`
+      )
+    },
+
+    onEachFeature: function(feature, layer) {
+      // Set the mouse events to change the map styling.
+      // layer.on({
+      //   // When a user's mouse cursor touches a map feature, the mouseover event calls this function, which makes that feature's opacity change to 90% so that it stands out.
+      //   mouseover: function(event) {
+      //     layer = event.target;
+      //     layer.setStyle({
+      //       fillOpacity: 0.9
+      //     });
+      //   },
+      //   // When the cursor no longer hovers over a map feature (that is, when the mouseout event occurs), the feature's opacity reverts back to 50%.
+      //   mouseout: function(event) {
+      //     layer = event.target;
+      //     layer.setStyle({
+      //       fillOpacity: 0.5
+      //     });
+      //   },
+      //   // When a feature (neighborhood) is clicked, it enlarges to fit the screen.
+      //   // click: function(event) {
+      //   //   myMap.fitBounds(event.target.getBounds());
+      //   // }
+      // });
+      layer.bindPopup(`<h3>${feature.properties.place}</h3><hr>
+      <h3>${new Date(feature.properties.time)}</h3>
+      <h3>Magnitude: ${feature.properties.mag}</h3>
+      <p>More Info <br>${feature.properties.url}</p>`)
+    }
+
+  }).addTo(myMap);;
+});
