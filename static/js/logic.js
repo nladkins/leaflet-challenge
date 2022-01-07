@@ -3,7 +3,7 @@ var myMap = L.map("map", {
   center: [
     0, 0
   ],
-  zoom: 2.4,
+  zoom: 2.5,
   layer: [street, topo]
 });
 
@@ -71,13 +71,18 @@ d3.json(queryUrl).then(function (data) {
       .DomUtil
       .create("div", "info legend");
    
-    var depth = [">= 100km", ">= 50km", ">= 10km", "< 10km"];
+    var depth = [
+    "Greater than or equal to 100km Depth", 
+    "Greater than or equal to 50km Depth", 
+    "Greater than or equal to 10km Depth", 
+    "Less than 10km Depth"
+    ];
     var colors = ["red", "orange", "yellow", "green"];
 
 
     for (var i = 0; i < depth.length; i++) {
-      div.innerHTML += "<i style='background: " + colors[i] + "'></i> " +
-        depth[i] + (depth[i + 1] ? "&ndash;" + depth[i + 1] + "<br>" : "+");
+      div.innerHTML += '<i style="background:' + colors[i] + '"></i> ' +
+        depth[i] + (depth[i + 1] ? "<br>": "");
     }
     return div;
   };
