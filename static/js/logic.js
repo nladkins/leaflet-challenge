@@ -21,11 +21,13 @@ var topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
 // Store our API endpoint as queryUrl.
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson";
 
+var quakes = new L.LayerGroup();
 
 function chooseColor(depth) {
-  if (depth <= 10) return "light yellow";
-  else if (depth <= 20) return "orange";
-  else return"red";
+  if (depth >= 100) return "red";
+  else if (depth >= 50) return "orange";
+  else if (depth >= 10) return "yellow";
+  else return "green";
 }
 
 // Perform a GET request to the query URL/
@@ -33,20 +35,18 @@ d3.json(queryUrl).then(function (data) {
   // Once we get a response, send the data.features object to the createFeatures function.
   L.geoJSON(data, {
     
-    style: function(feature, latlng) {
-      // Add circles to the map.
-      L.circleMarker([feature.geometry.coordinates[0], feature.geometry.coordinates[1]], {
-        fillOpacity: 0.75,
-        color: "white",
-        fillColor: chooseColor(feature.geometry.coordinates[2]),
-        weight: feature.geometry.coordinates[2],
-        // Adjust the radius.
-        radius: feature.properties.mag * 100
-      })
-    },
-
     pointToLayer: function (feature, latlng) {
       return L.circleMarker(latlng);
+    },
+    
+    style: function(feature, latlng) {
+      return {
+      // Add circles to the map.
+      fillOpacity: 0.75,
+      fillColor: chooseColor([feature.geometry.coordinates[2]]),
+      // Adjust the radius.
+      radius: feature.properties.mag * 2.1,
+      }
     },
     
     onEachFeature: function(feature, layer) {
@@ -54,9 +54,10 @@ d3.json(queryUrl).then(function (data) {
       layer.bindPopup(`<h3>${feature.properties.place}</h3><hr>
       <h3>${new Date(feature.properties.time)}</h3>
       <h3>Magnitude: ${feature.properties.mag}</h3>
+      <h3>Depth: ${feature.geometry.coordinates[2]}</h3>
       <p>More Info <br>${feature.properties.url}</p>`)
     }
 
   }).addTo(myMap);
-
+  
 });
