@@ -59,5 +59,30 @@ d3.json(queryUrl).then(function (data) {
     }
 
   }).addTo(myMap);
+
+  // Set up the legend.
+  var legend = L.control({
+    position: "bottomright"
+  });
+
+
+  legend.onAdd = function() {
+    var div = L
+      .DomUtil
+      .create("div", "info legend");
+   
+    var depth = [">= 100km", ">= 50km", ">= 10km", "< 10km"];
+    var colors = ["red", "orange", "yellow", "green"];
+
+
+    for (var i = 0; i < depth.length; i++) {
+      div.innerHTML += "<i style='background: " + colors[i] + "'></i> " +
+        depth[i] + (depth[i + 1] ? "&ndash;" + depth[i + 1] + "<br>" : "+");
+    }
+    return div;
+  };
+
+  // Adding Legend to the map
+  legend.addTo(myMap);
   
 });
